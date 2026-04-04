@@ -60,6 +60,32 @@ Legal-Judgement-Summarizer-using-RL/
 
 ## 🧠 Architecture & Methodology
 
+```
+Input Judgment
+      │
+      ▼
+  Sentence Tokenizer (NLTK punkt) + filter (>5 words)
+      │
+      ▼
+  InLegalBERT Encoder (frozen) → Mean Pooling → 768d
+      │
+      ▼
+┌─────────────────────────────────────────────────┐
+│          MultiAspectPolicyNetwork               │
+│                                                 │
+│  Shared Bi-LSTM  (2 layers, hidden=256, →512d)  │
+│         ↓                                       │
+│  Multi-Head Attention  (aspect emb as query)    │
+│         ↓                                       │
+│  Concat [LSTM+Attn | Position 64d | Aspect 512d]│
+│         ↓                                       │
+│  5× Aspect MLP Heads  (512→256→1, LayerNorm)    │
+└─────────────────────────────────────────────────┘
+      │
+      ▼
+  Top-K sentence selection per aspect
+```
+
 The system employs an **Actor-Critic style Reinforcement Learning** approach where the "Policy Network" acts as the agent, making selection decisions based on the document state.
 
 ### 1. The Policy Network (The Agent)
@@ -75,7 +101,7 @@ The agent is responsible for reading the document and deciding which sentences a
 
 Since we lack ground truth summaries during training, the model optimizes a composite **Reference-Free Reward**:
 
-$$R_{total} = \alpha(Coh) + \beta(Cov) + \gamma(Div) - \delta(Red) + \epsilon(Info) + \zeta(Pos)$$
+$$R = 0.25 \cdot Coh + 0.25 \cdot Cov + 0.15 \cdot (1-Red) + 0.10 \cdot Div + 0.10 \cdot Info + 0.05 \cdot Pos + 0.10 \cdot L_{len}$$
 
 | Component | Description | Improvement in Model 2 |
 |-----------|-------------|------------------------|
@@ -87,7 +113,14 @@ $$R_{total} = \alpha(Coh) + \beta(Cov) + \gamma(Div) - \delta(Red) + \epsilon(In
 | **Ordering (Ord)** | **New in Model 2**: Penalties for selecting sentences out of chronological order | Added feature for logical consistency |
 
 ---
-
+### REINFORCE with Baseline
+ 
+```
+baseline  =  0.9 × baseline + 0.1 × reward        ← EMA baseline
+advantage =  reward − baseline
+loss      = −Σ (log_prob × action × advantage)
+loss      =  loss − 0.15 × entropy                 ← exploration bonus
+```
 ## 📊 Models & Datasets
 
 ### Model 1: IN-Ext Baseline
