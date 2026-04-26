@@ -6,7 +6,7 @@
 
 A domain-specific, unsupervised abstractive/extractive summarization system designed specifically for **Indian Legal Judgments**. This project utilizes **Deep Reinforcement Learning (Policy Gradient)** to generate highly structured, multi-aspect summaries (Facts, Analysis, Arguments, Judgment, Statute), overcoming the critical bottleneck of requiring ground-truth reference summaries during the training phase.
 
-🔗 **[Live Demo]([https://searchenginellmandagents.streamlit.app/](https://huggingface.co/spaces/Mangesh1/legal-summarizer))**
+🔗 **[Live Demo](https://huggingface.co/spaces/Mangesh1/legal-summarizer)**
 
 ---
 
